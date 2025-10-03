@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporizador del Examen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #00205c;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1000px;
+            color: #00205c;
+        }
+
+        .timer {
+            font-size: 200px;
+            font-weight: bold;
+            color: red;
+        }
+
+        .timer-container {
+            margin: 20px 0;
+        }
+
+        #message {
+            font-size: 24px;
+            color: green;
+        }
+
+        .exam-info {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .header-info img {
+            height: 90px;
+        }
+
+        .local-time-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: #d7272f;
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: bold;
+            color: #00205c;
+            margin-top: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 15px;
+            color: #00205c;
+        }
+
+        .footer a {
+            color: #d7272f;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-info">
+            <img src="logo.png" alt="Logo del colegio"> <!-- Logo izquierdo -->
+
+            <div class="local-time-container">
+                <strong>Hora Local</strong> 
+                <span id="localTime" class="local-time"></span>
+            </div>
+
+            <img src="logo2.png" alt="Segundo Logo"> <!-- Logo derecho -->
+        </div>
+        
+        <h1>EXÁMENES DE PERÍODO 1</h1>
+        <div id="fechaActual" style="font-size: 28px; margin-bottom: 20px;"></div>
+
+        <div class="exam-info" id="examList"></div>
+
+        <div class="timer-container">
+            <div id="timer" class="timer">00:00:00</div>
+        </div>
+
+        <div id="message"></div>
+
+        <div class="footer">
+            <p>Diseñado por: <strong>Osmin Antonio Orellana Leiva</strong>, Profesor de Informática BI</p>
+        </div>
+    </div>
+
+    <script>
+        let readingTime = parseInt(localStorage.getItem("readingTime")) || 5; // Si no existe, por defecto 5 minutos
+        let examTime = parseInt(localStorage.getItem("examTime")) || 60; // Si no existe, por defecto 60 minutos
+        let examNames = JSON.parse(localStorage.getItem("examNames")) || ["Examen 1", "Examen 2"]; // Si no existe, por defecto
+
+        document.getElementById("examList").innerHTML = "<strong>Exámenes:</strong><br>" + examNames.join("<br>");
+
+        let timerElement = document.getElementById("timer");
+        let messageElement = document.getElementById("message");
+
+        let isReading = true;
+        let totalTime = readingTime * 60; // Convertido a segundos.
+
+        function updateLocalTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('localTime').textContent = `${hours}:${minutes}`;
+        }
+
+        function playVoice(message) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'es-ES'; // Idioma español
+            speechSynthesis.speak(utterance);
+        }
+
+        function startTimer() {
+            let interval = setInterval(() => {
+                let hours = Math.floor(totalTime / 3600);
+                let minutes = Math.floor((totalTime % 3600) / 60);
+                let seconds = totalTime % 60;
+
+                timerElement.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                if (isReading && totalTime <= 0) {
+                    // Fin de tiempo de lectura
+                    playVoice("Tiempo de lectura terminado");
+                    messageElement.textContent = "Tiempo de lectura terminado";
+                    isReading = false;
+                    totalTime = examTime * 60; // Cambia al tiempo de examen en segundos
+                    timerElement.style.color = "black"; // Cambia a color negro
+                    setTimeout(() => messageElement.textContent = '', 2000); // Mensaje desaparecerá después de 2 segundos
+                }
+
+                if (!isReading && totalTime <= 0) {
+                    clearInterval(interval);
+                     playVoice("La prueba ha finalizado. Por favor espere instrucciones.");
+                    messageElement.textContent = "El tiempo de desarrollo del examen ha finalizado";
+                   
+                }
+
+                totalTime--;
+            }, 1000);
+        }
+
+
+            function mostrarFechaActual() {
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    const hoy = new Date();
+    const nombreDia = dias[hoy.getDay()];
+    const dia = hoy.getDate();
+    const nombreMes = meses[hoy.getMonth()];
+    const año = hoy.getFullYear();
+
+    const fechaFormateada = `${nombreDia} ${dia} de ${nombreMes} de ${año}`;
+    document.getElementById('fechaActual').textContent = fechaFormateada;
+}
+
+mostrarFechaActual();
+
+        
+        setInterval(updateLocalTime, 1000); // Actualiza la hora local cada segundo
+        startTimer();
+    </script>
+
+</body>
+</html>
+
